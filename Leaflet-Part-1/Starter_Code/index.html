@@ -1,34 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Leaflet Step-1</title>
-
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin="" />
-
-  <!-- Our CSS -->
-  <link rel="stylesheet" type="text/css" href="static/css/style.css">
+  <title>Earthquake Visualization</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    #map {
+      height: 600px;
+    }
+    
+    .legend {
+      background-color: white;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+    }
+    
+    .legend-item {
+      margin-bottom: 5px;
+    }
+    
+    .legend-color {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      margin-right: 5px;
+    }
+  </style>
 </head>
-
 <body>
 
-  <!-- The div that holds our map -->
-  <div id="map"></div>
+<div id="map"></div>
 
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""></script>
-  <!-- D3 JavaScript -->
-  <script src="https://d3js.org/d3.v7.min.js"></script>
-  <!-- Our JavaScript -->
-  <script type="text/javascript" src="static/js/logic.js"></script>
+<div class="legend">
+  <div class="legend-item"><span class="legend-color" style="background-color: rgb(19, 235, 45);"></span>Depth &lt; 10 km</div>
+  <div class="legend-item"><span class="legend-color" style="background-color: rgb(138, 206, 0);"></span>Depth 10 - 30 km</div>
+  <div class="legend-item"><span class="legend-color" style="background-color: rgb(186, 174, 0);"></span>Depth 30 - 50 km</div>
+  <div class="legend-item"><span class="legend-color" style="background-color: rgb(218, 136, 0);"></span>Depth 50 - 70 km</div>
+  <div class="legend-item"><span class="legend-color" style="background-color: rgb(237, 91, 0);"></span>Depth 70 - 90 km</div>
+  <div class="legend-item"><span class="legend-color" style="background-color: rgb(242, 24, 31);"></span>Depth &gt; 90 km</div>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.0.0/d3.min.js"></script>
+<script>
+  var url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson";
+
+  var map = L.map('map').setView([0, 0], 2);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+
+  d3.json(url).then(function(data) {
+    L.geoJSON(data, {
+      pointToLayer: function(feature, latlng) {
+        var radius = Math.sqrt(feature.properties.mag) * 5;
+        var depth = feature.geometry.coordinates[2];
+        var color = depthColor(depth);
+        return L.circleMarker(latlng, {
+          radius: radius,
+          fillColor: color,
+          color: "#000",
+          weight: 1,
+          opacity: 1,
+          fillOpacity: 0.8
+        }).bindPopup(`<b>Location:</b> ${feature.properties.place}<br>
+                     <b>Magnitude:</b> ${feature.properties.mag}<br>
+                     <b>Depth:</b> ${depth} km<br>
+                     <b>Date:</b> ${moment(feature.properties.time).format('MMMM Do YYYY, h:mm:ss a')}`);
+      }
+    }).addTo(map);
+  });
+
+  function depthColor(depth) {
+    if (depth < 10) {
+      return 'rgb(19, 235, 45)';
+    } else if (depth < 30) {
+      return 'rgb(138, 206, 0)';
+    } else if (depth < 50) {
+      return 'rgb(186, 174, 0)';
+    } else if (depth < 70) {
+      return 'rgb(218, 136, 0)';
+    } else if (depth < 90) {
+      return 'rgb(237, 91, 0)';
+    } else {
+      return 'rgb(242, 24, 31)';
+    }
+  }
+</script>
+
 </body>
-
 </html>
